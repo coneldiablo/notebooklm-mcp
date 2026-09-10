@@ -1,3 +1,6 @@
+> [!WARNING]
+> **This project is no longer maintained.** As of September 2026 the repository is archived: no updates, bug fixes or support. The npm package will not receive further releases. It may stop working when the upstream services change. Feel free to fork.
+
 # NotebookLM MCP Server
 
 [![npm](https://img.shields.io/npm/v/notebooklm-mcp.svg)](https://www.npmjs.com/package/notebooklm-mcp)
