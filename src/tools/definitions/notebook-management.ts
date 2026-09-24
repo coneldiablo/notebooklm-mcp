@@ -8,14 +8,28 @@ import type { Tool } from "@modelcontextprotocol/sdk/types.js";
  */
 export const notebookManagementTools: Tool[] = [
   {
+    name: "search_remote_notebooks",
+    description:
+      "Read notebooks shown in the signed-in Gemini Notebook account, without " +
+      "requiring a URL. Optional query filters titles. Returns each notebook's " +
+      "title, ID, and URL; featured public examples are excluded. This does not " +
+      "add notebooks to the local library. Pass a returned URL directly to " +
+      "ask_question or add_source, or register it with add_notebook.",
+    inputSchema: {
+      type: "object",
+      properties: { query: { type: "string", description: "Optional title substring" } },
+    },
+    annotations: { title: "Find account notebooks", readOnlyHint: true, openWorldHint: true },
+  },
+  {
     name: "add_notebook",
     description:
       "Register a NotebookLM notebook in the local library so it can be " +
       "queried with `ask_question`, ingested into with `add_source`, etc.\n\n" +
       "## Required URL\n" +
-      "The user must supply the URL of a notebook they can access. " +
-      "Open it at https://notebook.google.com and copy its address from " +
-      "the browser. The notebook can remain private.\n\n" +
+      "Use a URL returned by search_remote_notebooks, or open a notebook " +
+      "at https://notebook.google.com and copy its address. The notebook " +
+      "can remain private.\n\n" +
       "## Permission workflow\n" +
       "Do NOT call this tool unprompted. The expected dialogue is:\n" +
       "  1. Ask for the URL\n" +

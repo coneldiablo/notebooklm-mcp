@@ -374,7 +374,15 @@ Opens a visible Chrome for first-time Google login.
 | `show_browser` | bool | no | Default `true` for setup. |
 | `browser_options` | object | no | Same shape as `ask_question`. |
 
-Returns immediately after the window is opened. The user has up to 10 minutes to complete the login. Verify with `get_health` afterwards.
+Returns immediately with `status: "in_progress"` and an `operation_id`; the browser opens in the background. The user has up to 10 minutes to complete login. Poll `get_auth_status` and verify with `get_health` afterwards. Calling `setup_auth` again during login returns the same operation; calling it when already authenticated preserves the saved login.
+
+## get_auth_status
+
+Read-only status for the current `setup_auth` operation: `idle`, `in_progress`, `authenticated`, or `failed`. It includes the operation ID, timestamps, and an error on failure.
+
+## search_remote_notebooks
+
+Read-only discovery of notebook cards shown on the signed-in account homepage. Optional `query` filters titles. Returns `id`, `title`, and `url` for each account notebook; featured public examples are excluded. These are remote notebooks and are separate from `list_notebooks`, which reads the local library.
 
 ---
 

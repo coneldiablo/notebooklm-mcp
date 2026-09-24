@@ -23,13 +23,17 @@ Wire it into your MCP client of choice (see the [README](../README.md#connect-to
 
 ### 2. Authenticate
 
-Call `setup_auth`. A Chrome window opens. Log in to the Google account that owns the Gemini Notebook notebooks you want to query. The tool closes the browser after confirming login; allow up to 10 minutes for this call.
+Call `setup_auth`. It returns immediately while a Chrome window opens in the background. Log in to the Google account that owns the Gemini Notebook notebooks you want to query. The browser closes after confirming login; you have up to 10 minutes.
 
 ```json
 { "name": "setup_auth", "arguments": {} }
 ```
 
-Verify:
+Poll until `status` is `authenticated` or `failed`, then verify:
+
+```json
+{ "name": "get_auth_status", "arguments": {} }
+```
 
 ```json
 { "name": "get_health", "arguments": {} }
@@ -39,7 +43,13 @@ Expect `"authenticated": true`.
 
 ### 3. Add a notebook to the local library
 
-Open a notebook you can access at `notebook.google.com` and copy its URL from the browser address bar. The notebook can remain private. Then:
+Find available account notebooks without a URL:
+
+```json
+{ "name": "search_remote_notebooks", "arguments": { "query": "n8n" } }
+```
+
+Pass a returned `url` directly to `ask_question`, or register it in the local library with metadata:
 
 ```json
 {

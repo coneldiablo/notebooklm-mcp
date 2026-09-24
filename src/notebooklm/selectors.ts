@@ -123,6 +123,7 @@ export const Selectors = {
      */
     addButton: [
       "button.add-source-button",
+      'button[aria-label="Добавить источник"]',
       'button[aria-label="Add source"]',
       'button[aria-label*="add source" i]',
       'button[aria-label*="quelle hinzu" i]',
@@ -135,12 +136,10 @@ export const Selectors = {
       'button[aria-label*="ソースを追加" i]',
     ],
     /**
-     * Real Material modal. `[role="dialog"]` is set by Angular synchronously
-     * the moment the modal mounts — race-free against the `.mdc-dialog--open`
-     * animation class and resistant to Material-UI version bumps. Avoid
-     * `.cdk-overlay-pane` (matches every dropdown / emoji picker / menu).
+     * Restrict to the add-sources component: Google can also mount an emoji
+     * picker or a promotional dialog with role=dialog at the same time.
      */
-    overlayPane: '[role="dialog"]',
+    overlayPane: 'mat-dialog-container[role="dialog"]:has(add-sources-dialog)',
     overlayInput: '[role="dialog"] input[type="text"]:not([readonly])',
     overlayTextarea: '[role="dialog"] textarea',
     /**
@@ -149,6 +148,7 @@ export const Selectors = {
      * the Material-Symbols icon name baked into a `<mat-icon>` text node.
      */
     sourceTypeUrl: [
+      'button.source-action-button:has(mat-icon:text-is("link_2"))',
       // Icon-anchored (language-free) — primary path.
       "button.drop-zone-icon-button:has(mat-icon.youtube-icon)",
       'button.drop-zone-icon-button:has(mat-icon:text-is("link"))',
@@ -164,6 +164,7 @@ export const Selectors = {
       'span:has-text("URL")',
     ],
     sourceTypeText: [
+      'button.source-action-button:has(mat-icon:text-is("content_paste"))',
       // Icon-anchored (language-free) — primary path.
       'button.drop-zone-icon-button:has(mat-icon:text-is("content_paste"))',
       // Visible-text fallbacks for major locales.
@@ -200,6 +201,7 @@ export const Selectors = {
      * visible-text variants are fallbacks for older builds.
      */
     insertConfirm: [
+      'button.mdc-button--unelevated:has-text("Добавить")',
       // Class-anchored (language-free).
       'button.mdc-button--raised:has-text("Insert")',
       'button.mat-flat-button:has-text("Insert")',

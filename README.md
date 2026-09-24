@@ -1,5 +1,5 @@
 > [!NOTE]
-> This is a community fork of the [archived upstream project](https://github.com/PleasePrompto/notebooklm-mcp). The `notebooklm-mcp` package on npm still points to upstream and does not contain this fork's fixes. Install this fork from source. Browser workflows still need verification against your signed-in Gemini Notebook account.
+> This is a community fork of the [archived upstream project](https://github.com/PleasePrompto/notebooklm-mcp). The `notebooklm-mcp` package on npm still points to upstream and does not contain this fork's fixes. Install this fork from source. The live smoke test below checks your own signed-in account.
 
 # NotebookLM MCP Server
 
@@ -118,7 +118,8 @@ Profile location (env-paths):
 
 Auth tools:
 
-- `setup_auth` — first-time login. Pass `show_browser=true` (default for setup) to see the window. The tool waits up to 10 minutes for you to complete the login.
+- `setup_auth` — starts first-time login and returns immediately. Pass `show_browser=true` (default) to see the window. The browser waits up to 10 minutes for login.
+- `get_auth_status` — poll until `authenticated` or `failed`.
 - `re_auth` — wipe stored auth and start over. Use when switching Google accounts or when authentication is broken.
 - `cleanup_data` — full cleanup with categorised preview. Pass `preserve_library=true` to keep `library.json` while wiping browser state.
 
@@ -201,6 +202,7 @@ All tools below are registered in v2.0.0 and visible under the `full` profile. S
 | Tool | Purpose |
 |---|---|
 | `add_notebook` | Add the URL of a personal Gemini Notebook to the local library. It can remain private. |
+| `search_remote_notebooks` | Find notebooks shown in the signed-in account by title, without supplying URLs. Excludes featured examples. |
 | `list_notebooks` | List every notebook in the library with metadata. |
 | `get_notebook` | Fetch one notebook by `id`. |
 | `select_notebook` | Set a notebook as the active default for `ask_question`. |
@@ -223,6 +225,7 @@ All tools below are registered in v2.0.0 and visible under the `full` profile. S
 |---|---|
 | `get_health` | Auth state, session count, configuration snapshot, troubleshooting hint. |
 | `setup_auth` | First-time interactive Google login. |
+| `get_auth_status` | Check progress and outcome of `setup_auth`. |
 | `re_auth` | Wipe auth + log in again. |
 | `cleanup_data` | Categorised preview + delete of all stored data. `preserve_library=true` keeps `library.json`. |
 
@@ -238,7 +241,7 @@ Profiles trim the tool list to keep host-agent context budgets in check.
 
 | Profile | Tools |
 |---|---|
-| `minimal` | `ask_question`, `get_health`, `list_notebooks`, `select_notebook`, `get_notebook` |
+| `minimal` | `ask_question`, `get_health`, `get_auth_status`, `search_remote_notebooks`, `list_notebooks`, `select_notebook`, `get_notebook` |
 | `standard` | `minimal` + `setup_auth`, `list_sessions`, `add_notebook`, `update_notebook`, `search_notebooks` |
 | `full` (default) | every tool registered above |
 
@@ -360,7 +363,14 @@ npm run dev        # tsx watch src/index.ts
 npm run lint       # eslint src
 npm run format     # prettier --write src
 npm run check      # format:check + lint + build
+npm run test:unit  # fast local regressions
 ```
+
+Live smoke test on a disposable notebook: set `SMOKE_NOTEBOOK_URL` and run
+`npm run test:live`. It checks saved login, remote discovery, an answer, and
+structured citations. Set `SMOKE_ADD_SOURCE=true` to also add one uniquely
+named test source and verify the source count increased. That option changes
+the test notebook on every run.
 
 The build is type-safe with no `any` casts; DOM types are enabled for in-page evaluations.
 
