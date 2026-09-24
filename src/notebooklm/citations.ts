@@ -46,7 +46,14 @@ export async function extractCitations(
     return { citations: [], formattedAnswer: answerText };
   }
 
-  const rawCitations = await readCitationStubs(page);
+  // The answer text can settle before Gemini Notebook mounts citation buttons.
+  // Poll the latest answer because a first DOM read may still have no markers.
+  const deadline = Date.now() + 10_000;
+  let rawCitations = await readCitationStubs(page);
+  while (rawCitations.length === 0 && Date.now() < deadline) {
+    await safeSleep(page, 250);
+    rawCitations = await readCitationStubs(page);
+  }
   if (rawCitations.length === 0) {
     return { citations: [], formattedAnswer: answerText };
   }

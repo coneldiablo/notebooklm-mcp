@@ -21,6 +21,17 @@ import type { AskQuestionResult, ToolResult, ProgressCallback } from "../types.j
 import { RateLimitError } from "../errors.js";
 import { CleanupManager } from "../utils/cleanup-manager.js";
 import { applyAiMarker, PROVENANCE } from "../utils/disclaimer.js";
+import { randomUUID } from "node:crypto";
+import type { RemoteNotebook } from "../session/session-manager.js";
+
+type AuthStatus = {
+  status: "idle" | "in_progress" | "authenticated" | "failed";
+  authenticated: boolean;
+  operation_id?: string;
+  started_at?: string;
+  completed_at?: string;
+  error?: string;
+};
 
 /**
  * Follow-up reminder appended to ask_question answers when explicitly enabled.
@@ -45,6 +56,7 @@ export class ToolHandlers {
   private sessionManager: SessionManager;
   private authManager: AuthManager;
   private library: NotebookLibrary;
+  private authOperation: AuthStatus | null = null;
 
   constructor(sessionManager: SessionManager, authManager: AuthManager, library: NotebookLibrary) {
     this.sessionManager = sessionManager;
@@ -430,89 +442,128 @@ export class ToolHandlers {
     }
   }
 
+  async handleGetAuthStatus(): Promise<ToolResult<AuthStatus>> {
+    if (this.authOperation?.status === "in_progress") {
+      return { success: true, data: { ...this.authOperation } };
+    }
+    const authenticated = (await this.authManager.getValidStatePath()) !== null;
+    return {
+      success: true,
+      data: this.authOperation
+        ? {
+            ...this.authOperation,
+            authenticated,
+            status: authenticated
+              ? "authenticated"
+              : this.authOperation.status === "authenticated"
+                ? "failed"
+                : this.authOperation.status,
+          }
+        : { status: authenticated ? "authenticated" : "idle", authenticated },
+    };
+  }
+
   /**
    * Handle setup_auth tool
    *
-   * Opens a browser window for manual login with live progress updates.
-   * The operation waits synchronously for login completion (up to 10 minutes).
+   * Starts interactive login and returns immediately. Poll get_auth_status.
    */
   async handleSetupAuth(
     args: {
       show_browser?: boolean;
       browser_options?: BrowserOptions;
     },
-    sendProgress?: ProgressCallback
+    _sendProgress?: ProgressCallback
   ): Promise<
     ToolResult<{
       status: string;
       message: string;
       authenticated: boolean;
-      duration_seconds?: number;
+      operation_id?: string;
     }>
   > {
     const { show_browser, browser_options } = args;
-
-    // CRITICAL: Send immediate progress to reset timeout from the very start
-    await sendProgress?.("Initializing authentication setup...", 0, 10);
 
     log.info(`🔧 [TOOL] setup_auth called`);
     if (show_browser !== undefined) {
       log.info(`  Show browser: ${show_browser}`);
     }
 
-    const startTime = Date.now();
-
-    // Apply browser options temporarily
-    const originalConfig = { ...CONFIG };
     const effectiveConfig = applyBrowserOptions(browser_options, show_browser);
-    Object.assign(CONFIG, effectiveConfig);
+    if (this.authOperation?.status === "in_progress") {
+      return {
+        success: true,
+        data: {
+          status: "in_progress",
+          message: "Authentication is already in progress; poll get_auth_status",
+          authenticated: false,
+          operation_id: this.authOperation.operation_id,
+        },
+      };
+    }
+    if ((await this.authManager.getValidStatePath()) !== null) {
+      return {
+        success: true,
+        data: { status: "authenticated", message: "Already authenticated", authenticated: true },
+      };
+    }
 
-    try {
-      // Progress: Starting
-      await sendProgress?.("Preparing authentication browser...", 1, 10);
-
-      log.info(`  🌐 Opening browser for interactive login...`);
-
-      // Progress: Opening browser
-      await sendProgress?.("Opening browser window...", 2, 10);
-
-      // Perform setup with progress updates (uses CONFIG internally)
-      const success = await this.authManager.performSetup(sendProgress);
-
-      const durationSeconds = (Date.now() - startTime) / 1000;
-
-      if (success) {
-        // Progress: Complete
-        await sendProgress?.("Authentication saved successfully!", 10, 10);
-
-        log.success(`✅ [TOOL] setup_auth completed (${durationSeconds.toFixed(1)}s)`);
-        return {
-          success: true,
-          data: {
-            status: "authenticated",
-            message: "Successfully authenticated and saved browser state",
-            authenticated: true,
-            duration_seconds: durationSeconds,
-          },
+    const operationId = randomUUID();
+    this.authOperation = {
+      status: "in_progress",
+      authenticated: false,
+      operation_id: operationId,
+      started_at: new Date().toISOString(),
+    };
+    // Keep the promise owned here: MCP tool calls return before the user signs in.
+    void (async () => {
+      try {
+        await this.sessionManager.closeAllSessions();
+        const success = await this.authManager.performSetup(undefined, !effectiveConfig.headless);
+        this.authOperation = {
+          ...this.authOperation!,
+          status: success ? "authenticated" : "failed",
+          authenticated: success,
+          completed_at: new Date().toISOString(),
+          ...(!success && { error: "Authentication failed or was cancelled" }),
         };
-      } else {
-        log.error(`❌ [TOOL] setup_auth failed (${durationSeconds.toFixed(1)}s)`);
-        return {
-          success: false,
-          error: "Authentication failed or was cancelled",
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        log.error(`❌ [TOOL] setup_auth failed: ${message}`);
+        this.authOperation = {
+          ...this.authOperation!,
+          status: "failed",
+          authenticated: false,
+          completed_at: new Date().toISOString(),
+          error: message,
         };
       }
+    })();
+    return {
+      success: true,
+      data: {
+        status: "in_progress",
+        message: "Browser login started; poll get_auth_status until it finishes",
+        authenticated: false,
+        operation_id: operationId,
+      },
+    };
+  }
+
+  async handleSearchRemoteNotebooks(args: {
+    query?: string;
+  }): Promise<ToolResult<{ notebooks: RemoteNotebook[]; total: number }>> {
+    try {
+      if (this.authOperation?.status === "in_progress") {
+        throw new Error("Authentication is in progress; poll get_auth_status first");
+      }
+      if ((await this.authManager.getValidStatePath()) === null) {
+        throw new Error("Not authenticated; call setup_auth and poll get_auth_status first");
+      }
+      const notebooks = await this.sessionManager.searchRemoteNotebooks(args.query);
+      return { success: true, data: { notebooks, total: notebooks.length } };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const durationSeconds = (Date.now() - startTime) / 1000;
-      log.error(`❌ [TOOL] setup_auth failed: ${errorMessage} (${durationSeconds.toFixed(1)}s)`);
-      return {
-        success: false,
-        error: errorMessage,
-      };
-    } finally {
-      // Restore original CONFIG
-      Object.assign(CONFIG, originalConfig);
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }
 
@@ -540,6 +591,9 @@ export class ToolHandlers {
       duration_seconds?: number;
     }>
   > {
+    if (this.authOperation?.status === "in_progress") {
+      return { success: false, error: "Authentication is in progress; poll get_auth_status first" };
+    }
     const { show_browser, browser_options } = args;
 
     await sendProgress?.("Preparing re-authentication...", 0, 12);
@@ -1029,9 +1083,7 @@ export class ToolHandlers {
       // `started` and `in_progress` count as success — the generation is on
       // its way; the caller polls `get_audio_status` for completion.
       const ok =
-        result.status === "ready" ||
-        result.status === "started" ||
-        result.status === "in_progress";
+        result.status === "ready" || result.status === "started" || result.status === "in_progress";
       return { success: ok, data: { result } };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);

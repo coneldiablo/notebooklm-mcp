@@ -37,7 +37,7 @@ export interface AskQuestionResult {
    */
   _provenance?: {
     provider: "google-notebooklm";
-    model: "gemini-2.5";
+    model: "unspecified";
     via: "chrome-automation";
     grounding: "user-uploaded-documents";
     ai_generated: true;

@@ -33,6 +33,8 @@ const PROFILES: Record<ProfileName, string[]> = {
   minimal: [
     "ask_question",
     "get_health",
+    "get_auth_status",
+    "search_remote_notebooks",
     "list_notebooks",
     "select_notebook",
     "get_notebook", // Added as it is read-only and useful
@@ -40,6 +42,8 @@ const PROFILES: Record<ProfileName, string[]> = {
   standard: [
     "ask_question",
     "get_health",
+    "get_auth_status",
+    "search_remote_notebooks",
     "list_notebooks",
     "select_notebook",
     "get_notebook",

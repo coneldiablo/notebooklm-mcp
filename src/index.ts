@@ -3,7 +3,7 @@
 /**
  * NotebookLM MCP Server
  *
- * MCP Server for Google NotebookLM - Chat with Gemini 2.5 through NotebookLM
+ * MCP Server for Gemini Notebook (formerly NotebookLM)
  * with session support and human-like behavior!
  *
  * Features:
@@ -59,16 +59,16 @@ import { log } from "./utils/logger.js";
 const SERVER_INSTRUCTIONS = `# notebooklm-mcp — research with Google NotebookLM
 
 This server lets an LLM run a fully session-based research workflow against
-a NotebookLM notebook (chat with Gemini 2.5 grounded on user-uploaded
+a Gemini Notebook notebook (chat grounded on notebook
 sources, ingest sources, generate Audio Overviews).
 
 ## First-run flow
 
-1. \`get_health\` → if \`authenticated=false\`, run \`setup_auth\` (opens
-   a browser tab — user logs in once, cookies persist).
-2. \`add_notebook\` to register a NotebookLM share-URL into the local
-   library (the user must provide the URL — see add_notebook for the link
-   workflow). Optionally \`select_notebook\` to make it the default.
+1. \`get_health\` → if \`authenticated=false\`, run \`setup_auth\` and poll
+   \`get_auth_status\` until authenticated (the user signs in once).
+2. \`search_remote_notebooks\` finds notebooks in the signed-in account.
+   Use a returned URL directly, or register it with \`add_notebook\` in the
+   local library. Optionally \`select_notebook\` to make it the default.
 3. \`ask_question\` — start asking. Save the returned \`session_id\` and
    reuse it for follow-up questions to keep context.
 
@@ -159,7 +159,6 @@ class NotebookLMMCPServer {
         capabilities: {
           tools: {},
           resources: {},
-          resourceTemplates: {},
           prompts: {},
           completions: {}, // Required for completion/complete support
           logging: {},
@@ -323,6 +322,16 @@ class NotebookLMMCPServer {
 
           case "get_health":
             result = await this.toolHandlers.handleGetHealth();
+            break;
+
+          case "get_auth_status":
+            result = await this.toolHandlers.handleGetAuthStatus();
+            break;
+
+          case "search_remote_notebooks":
+            result = await this.toolHandlers.handleSearchRemoteNotebooks(
+              args as { query?: string }
+            );
             break;
 
           case "setup_auth":
@@ -625,7 +634,7 @@ async function main() {
   console.error("║                                                          ║");
   console.error("║           NotebookLM MCP Server v2.0.0                   ║");
   console.error("║                                                          ║");
-  console.error("║   Chat with Gemini 2.5 through NotebookLM via MCP       ║");
+  console.error("║   Chat with Gemini Notebook through MCP                 ║");
   console.error("║                                                          ║");
   console.error("╚══════════════════════════════════════════════════════════╝");
   console.error("");

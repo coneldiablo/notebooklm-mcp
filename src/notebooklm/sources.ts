@@ -56,8 +56,12 @@ export async function addSource(page: Page, input: AddSourceInput): Promise<AddS
   log.info(`📄 [add_source] type=${input.type} target_uuid=${expectedUuid ?? "?"}`);
 
   try {
+    // Account announcements can open above the source picker and intercept
+    // every click, even when the picker itself is already present.
+    await dismissObstructingDialog(page);
     // 1. Open the Add-source dialog (or use one that's already open).
     await openAddSourceOverlay(page);
+    await dismissObstructingDialog(page);
 
     // 2. Pick the source type if there is a picker. Some overlay variants
     //    drop straight into an input field; pickSourceType is a no-op then.
@@ -86,9 +90,7 @@ export async function addSource(page: Page, input: AddSourceInput): Promise<AddS
       const currentUrl = page.url();
       const currentUuid = currentUrl.match(/notebook\/([a-f0-9-]+)/)?.[1];
       if (currentUuid && currentUuid !== expectedUuid) {
-        log.error(
-          `  ❌ Notebook redirect: expected ${expectedUuid}, got ${currentUuid}`
-        );
+        log.error(`  ❌ Notebook redirect: expected ${expectedUuid}, got ${currentUuid}`);
         return {
           success: false,
           type: input.type,
@@ -138,6 +140,18 @@ export async function addSource(page: Page, input: AddSourceInput): Promise<AddS
       sourceCountAfter: 0,
       message: err instanceof Error ? err.message : String(err),
     };
+  }
+}
+
+async function dismissObstructingDialog(page: Page): Promise<void> {
+  const blocker = page
+    .locator('mat-dialog-container[role="dialog"]:not(:has(add-sources-dialog))')
+    .last();
+  if (await blocker.isVisible({ timeout: 500 }).catch(() => false)) {
+    const close = blocker.locator("button.close-button").first();
+    if (await close.isVisible({ timeout: 500 }).catch(() => false)) {
+      await close.click({ timeout: 3_000 });
+    }
   }
 }
 
@@ -193,17 +207,16 @@ async function openAddSourceOverlay(page: Page): Promise<void> {
 
   // Try the sidebar button first — fastest path on a populated notebook.
   try {
-    await page
-      .locator(joinAlt(Selectors.sources.addButton))
-      .first()
-      .click({ timeout: 5_000 });
+    await page.locator(joinAlt(Selectors.sources.addButton)).first().click({ timeout: 5_000 });
     await page
       .locator(Selectors.sources.overlayPane)
       .first()
       .waitFor({ state: "visible", timeout: 8_000 });
     return;
   } catch (err) {
-    log.warning(`  ⚠️  Add-source button click failed (${err}), trying ?addSource=true URL fallback`);
+    log.warning(
+      `  ⚠️  Add-source button click failed (${err}), trying ?addSource=true URL fallback`
+    );
   }
 
   // URL fallback — useful when the sidebar button is hidden or covered.
@@ -237,7 +250,15 @@ async function pickSourceType(page: Page, type: SourceType): Promise<void> {
   for (const sel of candidates) {
     const target = overlay.locator(sel).first();
     if (await target.isVisible({ timeout: 1_000 }).catch(() => false)) {
-      await target.click();
+      try {
+        await target.click({ timeout: 3_000 });
+      } catch (error) {
+        // A delayed account announcement may appear after the source picker.
+        await dismissObstructingDialog(page);
+        await target.click({ timeout: 5_000 }).catch(() => {
+          throw error;
+        });
+      }
       // Sub-dialog needs a moment to hydrate before we type.
       await safeSleep(page, 500);
       return;
@@ -312,7 +333,14 @@ async function confirmInsert(page: Page): Promise<void> {
     if (await btn.isVisible({ timeout: 1_000 }).catch(() => false)) {
       const disabled = await btn.isDisabled().catch(() => false);
       if (disabled) continue;
-      await btn.click();
+      try {
+        await btn.click({ timeout: 3_000 });
+      } catch (error) {
+        await dismissObstructingDialog(page);
+        await btn.click({ timeout: 5_000 }).catch(() => {
+          throw error;
+        });
+      }
       log.info(`  ✅ submit clicked (selector: ${sel})`);
       return;
     }

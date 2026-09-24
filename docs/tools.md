@@ -45,7 +45,7 @@ Ask a question against a notebook. Reuses an existing browser session when `sess
   "question": "How does the OAuth refresh token rotation work?",
   "answer": "[AI-GENERATED ...] The refresh token is rotated each ...\n\nSources:\n[1] auth-spec.pdf — ...",
   "session_id": "ses_…",
-  "notebook_url": "https://notebooklm.google.com/notebook/…",
+  "notebook_url": "https://notebook.google.com/notebook/…",
   "session_info": {
     "age_seconds": 12,
     "message_count": 3,
@@ -53,7 +53,7 @@ Ask a question against a notebook. Reuses an existing browser session when `sess
   },
   "_provenance": {
     "provider": "google-notebooklm",
-    "model": "gemini-2.5",
+    "model": "unspecified",
     "via": "chrome-automation",
     "grounding": "user-uploaded-documents",
     "ai_generated": true
@@ -192,13 +192,13 @@ Run `generate_audio` first if no Audio Overview exists yet.
 
 ## add_notebook
 
-Add a NotebookLM share-URL to the local library. The tool description enforces a confirmation workflow on the host agent — do not call without explicit user consent.
+Add a personal Gemini Notebook URL to the local library. The notebook can remain private. The tool description enforces a confirmation workflow on the host agent — do not call without explicit user consent.
 
 ### Parameters
 
 | Name | Type | Required | Notes |
 |---|---|---|---|
-| `url` | string | yes | NotebookLM share URL. |
+| `url` | string | yes | Personal Gemini Notebook URL. |
 | `name` | string | yes | Display name. |
 | `description` | string | yes | Short description of the notebook content. |
 | `topics` | string[] | yes | Topics covered. |
@@ -232,7 +232,7 @@ No parameters. Returns the full library.
     {
       "id": "nb_abcd",
       "name": "n8n Documentation",
-      "url": "https://notebooklm.google.com/notebook/…",
+      "url": "https://notebook.google.com/notebook/…",
       "description": "n8n core + builtin nodes",
       "topics": ["workflow automation", "n8n"],
       "use_cases": ["building n8n workflows"],
@@ -374,7 +374,15 @@ Opens a visible Chrome for first-time Google login.
 | `show_browser` | bool | no | Default `true` for setup. |
 | `browser_options` | object | no | Same shape as `ask_question`. |
 
-Returns immediately after the window is opened. The user has up to 10 minutes to complete the login. Verify with `get_health` afterwards.
+Returns immediately with `status: "in_progress"` and an `operation_id`; the browser opens in the background. The user has up to 10 minutes to complete login. Poll `get_auth_status` and verify with `get_health` afterwards. Calling `setup_auth` again during login returns the same operation; calling it when already authenticated preserves the saved login.
+
+## get_auth_status
+
+Read-only status for the current `setup_auth` operation: `idle`, `in_progress`, `authenticated`, or `failed`. It includes the operation ID, timestamps, and an error on failure.
+
+## search_remote_notebooks
+
+Read-only discovery of notebook cards shown on the signed-in account homepage. Optional `query` uses Gemini Notebook's account search. Returns `id`, `title`, and `url` for each result; featured public examples are excluded. These are remote notebooks and are separate from `list_notebooks`, which reads the local library.
 
 ---
 

@@ -19,6 +19,10 @@ import { CONFIG } from "../config.js";
 import { log } from "../utils/logger.js";
 import type { SessionInfo } from "../types.js";
 import { randomBytes } from "crypto";
+import { normalizeNotebookUrl } from "../notebooklm/url.js";
+import { GEMINI_NOTEBOOK_ORIGIN, isNotebookAppUrl } from "../notebooklm/url.js";
+
+export type RemoteNotebook = { id: string; title: string; url: string };
 
 export class SessionManager {
   private authManager: AuthManager;
@@ -56,6 +60,74 @@ export class SessionManager {
     return randomBytes(4).toString("hex");
   }
 
+  /** Read the signed-in account's notebook cards, excluding featured examples. */
+  async searchRemoteNotebooks(query?: string): Promise<RemoteNotebook[]> {
+    const context = await this.sharedContextManager.getOrCreateContext();
+    const page = await context.newPage();
+    try {
+      await page.goto(`${GEMINI_NOTEBOOK_ORIGIN}/`, {
+        waitUntil: "domcontentloaded",
+        timeout: CONFIG.browserTimeout,
+      });
+      if (!isNotebookAppUrl(page.url())) {
+        throw new Error("Gemini Notebook redirected to sign-in; run re_auth");
+      }
+      const needle = query?.trim();
+      let searchedInPage = false;
+      if (needle) {
+        const searchButton = page.locator('button:has(mat-icon:text-is("search"))').first();
+        if (await searchButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await searchButton.click();
+          const searchInput = page.locator('input[type="text"]').first();
+          await searchInput.fill(needle);
+          // The account search debounces input before replacing the cards.
+          await page.waitForTimeout(900);
+          searchedInPage = true;
+        }
+      }
+      await page
+        .locator("mat-card.project-button-card")
+        .first()
+        .waitFor({ timeout: searchedInPage ? 3000 : 15000 })
+        .catch(() => undefined);
+      // Featured examples may hydrate before the account's own cards.
+      await page
+        .locator("mat-card.project-button-card:not(.featured-project-card)")
+        .first()
+        .waitFor({ timeout: 3000 })
+        .catch(() => undefined);
+      const notebooks = await page.evaluate(() => {
+        return [...document.querySelectorAll("mat-card.project-button-card")]
+          .filter((card) => !card.classList.contains("featured-project-card"))
+          .map((card) => {
+            const anchor = card.querySelector<HTMLAnchorElement>('a[href^="/notebook/"]');
+            const title = card.querySelector(".project-button-title")?.textContent?.trim();
+            return anchor && title ? { path: anchor.getAttribute("href")!, title } : null;
+          })
+          .filter((item): item is { path: string; title: string } => item !== null);
+      });
+      const seen = new Set<string>();
+      const normalized = notebooks.flatMap(({ path, title }) => {
+        try {
+          const url = normalizeNotebookUrl(new URL(path, GEMINI_NOTEBOOK_ORIGIN).toString());
+          const id = new URL(url).pathname.split("/")[2];
+          if (seen.has(id)) return [];
+          seen.add(id);
+          return [{ id, title, url }];
+        } catch {
+          return [];
+        }
+      });
+      return needle && !searchedInPage
+        ? normalized.filter((notebook) =>
+            notebook.title.toLocaleLowerCase().includes(needle.toLocaleLowerCase())
+          )
+        : normalized;
+    } finally {
+      await page.close();
+    }
+  }
+
   /**
    * Get existing session or create a new one
    *
@@ -69,13 +141,11 @@ export class SessionManager {
     overrideHeadless?: boolean
   ): Promise<BrowserSession> {
     // Determine target notebook URL
-    const targetUrl = (notebookUrl || CONFIG.notebookUrl || "").trim();
-    if (!targetUrl) {
+    const rawUrl = (notebookUrl || CONFIG.notebookUrl || "").trim();
+    if (!rawUrl) {
       throw new Error("Notebook URL is required to create a session");
     }
-    if (!targetUrl.startsWith("http")) {
-      throw new Error("Notebook URL must be an absolute URL");
-    }
+    const targetUrl = normalizeNotebookUrl(rawUrl);
 
     // Generate ID if not provided
     if (!sessionId) {

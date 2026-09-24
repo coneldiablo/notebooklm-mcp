@@ -33,9 +33,9 @@ export const systemTools: Tool[] = [
   {
     name: "setup_auth",
     description:
-      "Open a browser window for first-time Google login. Returns immediately " +
-      "after spawning the browser; the user has up to 10 minutes to complete " +
-      "sign-in, then cookies are persisted for future runs.\n\n" +
+      "Start first-time Google login in a browser and return immediately. " +
+      "Poll get_auth_status until authenticated or failed. The browser remains " +
+      "open while the user signs in (up to 10 minutes).\n\n" +
       "When to use:\n" +
       "  • `get_health` reports `authenticated=false` for the first time\n" +
       "  • Auto-login credentials are not configured\n" +
@@ -74,6 +74,15 @@ export const systemTools: Tool[] = [
       idempotentHint: true,
       openWorldHint: true,
     },
+  },
+  {
+    name: "get_auth_status",
+    description:
+      "Check the current setup_auth operation. Returns idle, in_progress, " +
+      "authenticated, or failed, with operation_id and timestamps when available. " +
+      "Poll this after setup_auth; it does not open or reset the browser.",
+    inputSchema: { type: "object", properties: {} },
+    annotations: { title: "Get authentication status", readOnlyHint: true, openWorldHint: false },
   },
   {
     name: "re_auth",

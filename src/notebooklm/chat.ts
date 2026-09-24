@@ -305,7 +305,8 @@ export async function waitForStableAnswer(
 
 /**
  * Read the latest answer container's text and strip UI-control leakage.
- * Uses `:last-child` so we always target the most recent turn.
+ * The caller uses `.last()` because other controls can follow the answer
+ * container in current Gemini Notebook layouts.
  */
 async function readLatestAnswer(page: Page): Promise<string | null> {
   try {

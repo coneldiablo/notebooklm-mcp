@@ -17,6 +17,7 @@ import type {
   UpdateNotebookInput,
   LibraryStats,
 } from "./types.js";
+import { normalizeNotebookUrl } from "../notebooklm/url.js";
 
 export class NotebookLibrary {
   private libraryPath: string;
@@ -145,7 +146,7 @@ export class NotebookLibrary {
     // Create entry
     const notebook: NotebookEntry = {
       id,
-      url: input.url,
+      url: normalizeNotebookUrl(input.url),
       name: input.name,
       description: input.description,
       topics: input.topics,
@@ -248,7 +249,7 @@ export class NotebookLibrary {
       ...(input.content_types && { content_types: input.content_types }),
       ...(input.use_cases && { use_cases: input.use_cases }),
       ...(input.tags && { tags: input.tags }),
-      ...(input.url && { url: input.url }),
+      ...(input.url && { url: normalizeNotebookUrl(input.url) }),
     };
 
     this.saveLibrary(updated);
