@@ -382,7 +382,7 @@ Read-only status for the current `setup_auth` operation: `idle`, `in_progress`, 
 
 ## search_remote_notebooks
 
-Read-only discovery of notebook cards shown on the signed-in account homepage. Optional `query` filters titles. Returns `id`, `title`, and `url` for each account notebook; featured public examples are excluded. These are remote notebooks and are separate from `list_notebooks`, which reads the local library.
+Read-only discovery of notebook cards shown on the signed-in account homepage. Optional `query` uses Gemini Notebook's account search. Returns `id`, `title`, and `url` for each result; featured public examples are excluded. These are remote notebooks and are separate from `list_notebooks`, which reads the local library.
 
 ---
 

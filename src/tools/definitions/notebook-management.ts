@@ -11,7 +11,7 @@ export const notebookManagementTools: Tool[] = [
     name: "search_remote_notebooks",
     description:
       "Read notebooks shown in the signed-in Gemini Notebook account, without " +
-      "requiring a URL. Optional query filters titles. Returns each notebook's " +
+      "requiring a URL. Optional query uses the account's title search. Returns each notebook's " +
       "title, ID, and URL; featured public examples are excluded. This does not " +
       "add notebooks to the local library. Pass a returned URL directly to " +
       "ask_question or add_source, or register it with add_notebook.",

@@ -72,10 +72,23 @@ export class SessionManager {
       if (!isNotebookAppUrl(page.url())) {
         throw new Error("Gemini Notebook redirected to sign-in; run re_auth");
       }
+      const needle = query?.trim();
+      let searchedInPage = false;
+      if (needle) {
+        const searchButton = page.locator('button:has(mat-icon:text-is("search"))').first();
+        if (await searchButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await searchButton.click();
+          const searchInput = page.locator('input[type="text"]').first();
+          await searchInput.fill(needle);
+          // The account search debounces input before replacing the cards.
+          await page.waitForTimeout(900);
+          searchedInPage = true;
+        }
+      }
       await page
         .locator("mat-card.project-button-card")
         .first()
-        .waitFor({ timeout: 15000 })
+        .waitFor({ timeout: searchedInPage ? 3000 : 15000 })
         .catch(() => undefined);
       // Featured examples may hydrate before the account's own cards.
       await page
@@ -105,9 +118,10 @@ export class SessionManager {
           return [];
         }
       });
-      const needle = query?.trim().toLocaleLowerCase();
-      return needle
-        ? normalized.filter((notebook) => notebook.title.toLocaleLowerCase().includes(needle))
+      return needle && !searchedInPage
+        ? normalized.filter((notebook) =>
+            notebook.title.toLocaleLowerCase().includes(needle.toLocaleLowerCase())
+          )
         : normalized;
     } finally {
       await page.close();
