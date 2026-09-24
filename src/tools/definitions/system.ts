@@ -33,9 +33,9 @@ export const systemTools: Tool[] = [
   {
     name: "setup_auth",
     description:
-      "Open a browser window for first-time Google login. Returns immediately " +
-      "after spawning the browser; the user has up to 10 minutes to complete " +
-      "sign-in, then cookies are persisted for future runs.\n\n" +
+      "Open a browser window for first-time Google login. This tool waits up " +
+      "to 10 minutes for the user to complete sign-in, then persists cookies " +
+      "for future runs. The MCP client must allow a long tool-call timeout.\n\n" +
       "When to use:\n" +
       "  • `get_health` reports `authenticated=false` for the first time\n" +
       "  • Auto-login credentials are not configured\n" +

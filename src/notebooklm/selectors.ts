@@ -31,7 +31,7 @@ export const Selectors = {
   chat: {
     answerContainer: ".to-user-container",
     answerText: ".to-user-container .message-text-content",
-    latestAnswerText: ".to-user-container:last-child .message-text-content",
+    latestAnswerText: ".to-user-container .message-text-content",
     /**
      * Chat textarea. The class is shared across locales; aria-labels are a
      * fallback for older builds where the class was different.

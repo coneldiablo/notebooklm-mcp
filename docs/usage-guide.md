@@ -23,7 +23,7 @@ Wire it into your MCP client of choice (see the [README](../README.md#connect-to
 
 ### 2. Authenticate
 
-Call `setup_auth`. A Chrome window opens. Log in to the Google account that owns the NotebookLM notebooks you want to query. Close the browser when done.
+Call `setup_auth`. A Chrome window opens. Log in to the Google account that owns the Gemini Notebook notebooks you want to query. The tool closes the browser after confirming login; allow up to 10 minutes for this call.
 
 ```json
 { "name": "setup_auth", "arguments": {} }
