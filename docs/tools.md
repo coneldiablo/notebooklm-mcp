@@ -45,7 +45,7 @@ Ask a question against a notebook. Reuses an existing browser session when `sess
   "question": "How does the OAuth refresh token rotation work?",
   "answer": "[AI-GENERATED ...] The refresh token is rotated each ...\n\nSources:\n[1] auth-spec.pdf — ...",
   "session_id": "ses_…",
-  "notebook_url": "https://notebooklm.google.com/notebook/…",
+  "notebook_url": "https://notebook.google.com/notebook/…",
   "session_info": {
     "age_seconds": 12,
     "message_count": 3,
@@ -53,7 +53,7 @@ Ask a question against a notebook. Reuses an existing browser session when `sess
   },
   "_provenance": {
     "provider": "google-notebooklm",
-    "model": "gemini-2.5",
+    "model": "unspecified",
     "via": "chrome-automation",
     "grounding": "user-uploaded-documents",
     "ai_generated": true
@@ -192,13 +192,13 @@ Run `generate_audio` first if no Audio Overview exists yet.
 
 ## add_notebook
 
-Add a NotebookLM share-URL to the local library. The tool description enforces a confirmation workflow on the host agent — do not call without explicit user consent.
+Add a personal Gemini Notebook URL to the local library. The notebook can remain private. The tool description enforces a confirmation workflow on the host agent — do not call without explicit user consent.
 
 ### Parameters
 
 | Name | Type | Required | Notes |
 |---|---|---|---|
-| `url` | string | yes | NotebookLM share URL. |
+| `url` | string | yes | Personal Gemini Notebook URL. |
 | `name` | string | yes | Display name. |
 | `description` | string | yes | Short description of the notebook content. |
 | `topics` | string[] | yes | Topics covered. |
@@ -232,7 +232,7 @@ No parameters. Returns the full library.
     {
       "id": "nb_abcd",
       "name": "n8n Documentation",
-      "url": "https://notebooklm.google.com/notebook/…",
+      "url": "https://notebook.google.com/notebook/…",
       "description": "n8n core + builtin nodes",
       "topics": ["workflow automation", "n8n"],
       "use_cases": ["building n8n workflows"],

@@ -3,7 +3,7 @@
 /**
  * NotebookLM MCP Server
  *
- * MCP Server for Google NotebookLM - Chat with Gemini 2.5 through NotebookLM
+ * MCP Server for Gemini Notebook (formerly NotebookLM)
  * with session support and human-like behavior!
  *
  * Features:
@@ -59,14 +59,14 @@ import { log } from "./utils/logger.js";
 const SERVER_INSTRUCTIONS = `# notebooklm-mcp — research with Google NotebookLM
 
 This server lets an LLM run a fully session-based research workflow against
-a NotebookLM notebook (chat with Gemini 2.5 grounded on user-uploaded
+a Gemini Notebook notebook (chat grounded on notebook
 sources, ingest sources, generate Audio Overviews).
 
 ## First-run flow
 
 1. \`get_health\` → if \`authenticated=false\`, run \`setup_auth\` (opens
    a browser tab — user logs in once, cookies persist).
-2. \`add_notebook\` to register a NotebookLM share-URL into the local
+2. \`add_notebook\` to register a Gemini Notebook URL into the local
    library (the user must provide the URL — see add_notebook for the link
    workflow). Optionally \`select_notebook\` to make it the default.
 3. \`ask_question\` — start asking. Save the returned \`session_id\` and
@@ -159,7 +159,6 @@ class NotebookLMMCPServer {
         capabilities: {
           tools: {},
           resources: {},
-          resourceTemplates: {},
           prompts: {},
           completions: {}, // Required for completion/complete support
           logging: {},
@@ -625,7 +624,7 @@ async function main() {
   console.error("║                                                          ║");
   console.error("║           NotebookLM MCP Server v2.0.0                   ║");
   console.error("║                                                          ║");
-  console.error("║   Chat with Gemini 2.5 through NotebookLM via MCP       ║");
+  console.error("║   Chat with Gemini Notebook through MCP                 ║");
   console.error("║                                                          ║");
   console.error("╚══════════════════════════════════════════════════════════╝");
   console.error("");

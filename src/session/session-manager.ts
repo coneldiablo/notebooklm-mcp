@@ -19,6 +19,7 @@ import { CONFIG } from "../config.js";
 import { log } from "../utils/logger.js";
 import type { SessionInfo } from "../types.js";
 import { randomBytes } from "crypto";
+import { normalizeNotebookUrl } from "../notebooklm/url.js";
 
 export class SessionManager {
   private authManager: AuthManager;
@@ -69,13 +70,11 @@ export class SessionManager {
     overrideHeadless?: boolean
   ): Promise<BrowserSession> {
     // Determine target notebook URL
-    const targetUrl = (notebookUrl || CONFIG.notebookUrl || "").trim();
-    if (!targetUrl) {
+    const rawUrl = (notebookUrl || CONFIG.notebookUrl || "").trim();
+    if (!rawUrl) {
       throw new Error("Notebook URL is required to create a session");
     }
-    if (!targetUrl.startsWith("http")) {
-      throw new Error("Notebook URL must be an absolute URL");
-    }
+    const targetUrl = normalizeNotebookUrl(rawUrl);
 
     // Generate ID if not provided
     if (!sessionId) {

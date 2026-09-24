@@ -16,7 +16,7 @@ Practical end-to-end walkthroughs against v2.0.0. Each section is a self-contain
 ### 1. Install and start
 
 ```bash
-npx notebooklm-mcp@latest
+node dist/index.js
 ```
 
 Wire it into your MCP client of choice (see the [README](../README.md#connect-to-claude-code)).
@@ -39,13 +39,13 @@ Expect `"authenticated": true`.
 
 ### 3. Add a notebook to the local library
 
-Get a NotebookLM share-URL: open the notebook in `notebooklm.google.com`, click _Share → Anyone with the link → Copy link_. Then:
+Open a notebook you can access at `notebook.google.com` and copy its URL from the browser address bar. The notebook can remain private. Then:
 
 ```json
 {
   "name": "add_notebook",
   "arguments": {
-    "url": "https://notebooklm.google.com/notebook/abcd-efgh",
+    "url": "https://notebook.google.com/notebook/abcd-efgh",
     "name": "n8n Documentation",
     "description": "n8n core docs + builtin nodes",
     "topics": ["workflow automation", "n8n", "node configuration"],
@@ -197,10 +197,10 @@ Run two parallel installations against different Google accounts:
 
 ```bash
 # Terminal A: work account
-npx notebooklm-mcp@latest --account work
+node dist/index.js --account work
 
 # Terminal B: personal account
-npx notebooklm-mcp@latest --account personal
+node dist/index.js --account personal
 ```
 
 Each account gets its own Chrome profile under `<dataDir>/accounts/<name>/`. The first run for a new account requires its own `setup_auth`. Switching is just a matter of starting the server with a different `--account` flag (or `NOTEBOOKLM_ACCOUNT` env).
@@ -219,7 +219,7 @@ There is no shared library between accounts — each account has its own `librar
 Start the server in HTTP mode:
 
 ```bash
-npx notebooklm-mcp@latest --transport http --port 3000 --host 0.0.0.0
+node dist/index.js --transport http --port 3000 --host 0.0.0.0
 ```
 
 The two operations:

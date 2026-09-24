@@ -13,6 +13,7 @@
     "dev": "tsx watch src/index.ts",
     "prepare": "npm run build",
     "test": "tsx src/index.ts",
+    "test:unit": "tsx --test tests/*.test.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write src",
@@ -30,11 +31,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PleasePrompto/notebooklm-mcp.git"
+    "url": "git+https://github.com/coneldiablo/notebooklm-mcp.git"
   },
-  "homepage": "https://github.com/PleasePrompto/notebooklm-mcp#readme",
+  "homepage": "https://github.com/coneldiablo/notebooklm-mcp#readme",
   "bugs": {
-    "url": "https://github.com/PleasePrompto/notebooklm-mcp/issues"
+    "url": "https://github.com/coneldiablo/notebooklm-mcp/issues"
   },
   "files": [
     "dist",

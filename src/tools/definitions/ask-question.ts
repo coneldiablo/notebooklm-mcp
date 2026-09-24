@@ -14,7 +14,7 @@ export function buildAskQuestionDescription(library: NotebookLibrary): string {
     const topics = getTopicsLine(active);
     const useCases = getUseCaseBullets(active);
 
-    return `# Conversational Research Partner (NotebookLM • Gemini 2.5 • Session RAG)
+    return `# Conversational Research Partner (Gemini Notebook • Session RAG)
 
 **Active Notebook:** ${active.name}
 **Content:** ${active.description}
@@ -97,10 +97,10 @@ ${bt}${bt}${bt}
 - Or set notebook_url for ad-hoc notebooks (not in library)
 - If ambiguous which notebook fits, ASK the user which to use`;
   } else {
-    return `# Conversational Research Partner (NotebookLM • Gemini 2.5 • Session RAG)
+    return `# Conversational Research Partner (Gemini Notebook • Session RAG)
 
 ## No Active Notebook
-- Visit https://notebooklm.google to create a notebook and get a share link
+- Visit https://notebook.google.com to create a notebook and copy its URL
 - Use **add_notebook** to add it to your library (explains how to get the link)
 - Use **list_notebooks** to show available sources
 - Use **select_notebook** to set one active
@@ -144,7 +144,7 @@ export const askQuestionTool: Tool = {
         description:
           "Direct NotebookLM URL — overrides `notebook_id`. Use for ad-hoc " +
           "queries against notebooks not yet in your library. Format: " +
-          "`https://notebooklm.google.com/notebook/<uuid>`.",
+          "`https://notebook.google.com/notebook/<uuid>`.",
       },
       source_format: {
         type: "string",
@@ -152,8 +152,8 @@ export const askQuestionTool: Tool = {
         description:
           "How citations are returned alongside the answer:\n" +
           "  • `none` (default) — raw answer, no citation extraction (fastest)\n" +
-          "  • `footnotes` — answer plus a `Sources:` block, e.g. `[1] DocName — \"excerpt…\"`\n" +
-          "  • `inline` — `[N]` markers in the answer are replaced with `[N] (DocName: \"excerpt…\")`\n" +
+          '  • `footnotes` — answer plus a `Sources:` block, e.g. `[1] DocName — "excerpt…"`\n' +
+          '  • `inline` — `[N]` markers in the answer are replaced with `[N] (DocName: "excerpt…")`\n' +
           "  • `json` — answer text untouched; structured `sources` array on the response\n\n" +
           "Use `none` for snappy chat. Use `json` when downstream code needs to " +
           "process citations programmatically. Use `footnotes`/`inline` when " +
@@ -241,7 +241,7 @@ export const askQuestionTool: Tool = {
     required: ["question"],
   },
   annotations: {
-    title: "Ask NotebookLM (Gemini 2.5)",
+    title: "Ask Gemini Notebook",
     readOnlyHint: false,
     destructiveHint: false,
     idempotentHint: false,

@@ -12,6 +12,7 @@
 import envPaths from "env-paths";
 import fs from "fs";
 import path from "path";
+import { GEMINI_NOTEBOOK_ORIGIN } from "./notebooklm/url.js";
 
 // Cross-platform data paths (unified without -nodejs suffix)
 // Linux: ~/.local/share/notebooklm-mcp/
@@ -21,11 +22,10 @@ import path from "path";
 const paths = envPaths("notebooklm-mcp", { suffix: "" });
 
 /**
- * Google NotebookLM Auth URL (used by setup_auth)
- * This is the base Google login URL that redirects to NotebookLM
+ * Personal Gemini Notebook entry URL (used by setup_auth).
+ * Google redirects unauthenticated visitors to its current sign-in flow.
  */
-export const NOTEBOOKLM_AUTH_URL =
-  "https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fnotebooklm.google.com%2F&flowName=GlifWebSignIn&flowEntry=ServiceLogin";
+export const NOTEBOOKLM_AUTH_URL = GEMINI_NOTEBOOK_ORIGIN;
 
 export interface Config {
   // NotebookLM - optional, used for legacy default notebook
